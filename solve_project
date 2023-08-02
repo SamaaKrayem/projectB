@@ -1,0 +1,59 @@
+def solve_project(file):
+  variables, objective_func , is_max = read_obj_func(file)
+  variables, constraints_functions , inequalities = read_constraints(file)
+  print(objective_func,is_max,variables, constraints_functions , inequalities)
+  prev_point = [100] #randomly chosen
+  new_point = [15]
+  new_constraints_functions = []
+  new_inequalities = []
+  diff = []
+  constant_inequalities = []
+  for j,var in enumerate(variables) :
+    diff.append( new_point[j]-prev_point[j] )
+  for inequality in inequalities:
+    list_inequality = inequality.split(' ')
+    constant_inequalities.append(list_inequality[-1])
+  print(np.linalg.norm(diff))
+  points = []
+  while(np.linalg.norm(diff)>0.1):
+    prev_point=new_point
+    lin_objective_func = linearize_expression(objective_func, variables , new_point)
+    print(lin_objective_func)
+    lin_objective_func = simplify_expression(lin_objective_func)
+    print(lin_objective_func)
+    lin_objective_func , zevel1,zevel2,zevel3  = remove_constants(str(lin_objective_func))
+    print(lin_objective_func)
+    for i in range(len(constraints_functions)):
+      new_const = linearize_expression(constraints_functions[i], variables, new_point)
+      new_const = simplify_expression(new_const)
+      new_constraints_functions.append(new_const)
+      new_constraints_functions[i]  ,constant , is_plus , exit =remove_constants(str(new_constraints_functions[i]))
+      if exit :
+        print('exitexitexitexitexit')
+        print(new_point)
+        return
+      if constant != None :
+          if is_plus:
+            new_number =  float(constant_inequalities[i]) - float(constant)
+            new_inequalities.append(inequalities[i])
+            new_inequalities[i]=new_inequalities[i].replace(constant_inequalities[i],str(new_number))
+          else:
+            new_number =  float(constant_inequalities[i]) + float(constant)
+            new_inequalities.append(inequalities[i])
+            new_inequalities[i]=(new_inequalities[i]).replace(constant_inequalities[i],str(new_number))
+      else:
+        new_inequalities.append(inequalities[i])
+    print(lin_objective_func,is_max,variables, new_constraints_functions , new_inequalities)
+    generate_lp_file(lin_objective_func, new_constraints_functions, 'problem.lp',new_inequalities , is_max)
+    new_point = solve_linear_problem('problem.lp')
+    new_constraints_functions = []
+    new_inequalities = []
+    diff = []
+    for j,var in enumerate(variables) :
+        diff.append( new_point[j]-prev_point[j] )
+    print(np.linalg.norm(diff))
+    if new_point in points:
+      break
+    points.append(new_point)
+  print(new_point)
+  return
