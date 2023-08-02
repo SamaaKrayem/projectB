@@ -1,0 +1,248 @@
+import math
+import re
+
+def evaluate_expression(expression):
+    # Define the regular expression pattern to match the function substitutions
+    pattern = r'(?<![a-zA-Z0-9_])((sin|cos|tan|tanh|exp|log|sqrt)\((-?\d+(\.\d+)?)\))(?![a-zA-Z0-9_])'
+
+    # Define a function to evaluate the matched substitutions
+    def evaluate(match):
+        function = match.group(2)
+        number = float(match.group(3))
+        result = expression
+        if function == 'sin':
+            return str(math.sin(number))
+        elif function == 'cos':
+            return str(math.cos(number))
+        elif function == 'tan':
+            return str(math.tan(number))
+        elif function == 'tanh':
+            return str(math.tanh(number))
+        elif function == 'exp':
+            return str(math.exp(number))
+        elif function == 'log':
+            return str(math.log(number))
+        elif function == 'sqrt':
+            return str(math.sqrt(number))
+
+    # Perform the substitutions using the evaluate function
+    result = expression
+    match = re.search(pattern, str(expression))
+    print(match)
+    if match:
+      result = re.sub(pattern, evaluate, str(expression))
+
+    return result
+
+
+  def convert_division_to_multiplication(expression):
+    terms = re.split(r'([-+*/])', expression)
+    converted_terms = []
+
+    i = 0
+    while i < len(terms):
+        term = terms[i]
+        if term.strip() == '/':
+            divisor = float(terms[i + 1])
+            variable = terms[i + 2].strip()
+            converted_terms.append(f'{divisor:.15g} * {variable}')
+            i += 2
+        else:
+            converted_terms.append(term)
+        i += 1
+
+    converted_expression = ''.join(converted_terms)
+    return converted_expression
+
+
+
+      from sympy import symbols, sympify, Float
+def simplify_expression(expression):
+    # Parse the expression
+    parsed_expr = sympify(expression)
+
+    # Get the individual terms
+    terms = parsed_expr.as_ordered_terms()
+
+    # Separate the terms into constant and variable parts
+    constant_terms = []
+    variable_terms = []
+    for term in terms:
+        if term.is_number:
+            constant_terms.append(term)
+        else:
+            variable_terms.append(term)
+
+    # Combine the constant and variable parts
+    simplified_str = " + ".join(str(term) for term in variable_terms)
+    if constant_terms:
+        constant_str = " + ".join(str(Float(term)) for term in constant_terms)
+        if simplified_str:
+            simplified_str += " + " + constant_str
+        else:
+            simplified_str = constant_str
+
+    return simplified_str
+
+
+def read_obj_func(filename):
+    variables = []
+    objective_function = ""
+    is_max = False
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            line = line.strip()
+            if line.startswith("VAR"):
+                # Extract variable names
+                variable_line = line.split(' ')
+                var = variable_line[1:]
+                var = sp.symbols(var)
+                variables.extend(var)
+            elif line.startswith("MAX") or line.startswith("MIN"):
+                if line.startswith("MAX"):
+                    is_max =True
+                # Extract objective function
+                objective_function = line[4:]
+
+    return variables, objective_function, is_max
+
+  from sympy.core.evalf import N
+import re
+
+def remove_trailing_operators(expression):
+
+    # Use regular expressions to match the trailing "+" or "-" signs
+    pattern = r"([+-])$"
+    match = re.search(pattern, expression)
+
+    if match:
+        # Remove the trailing operator if found
+        expression = expression[:-1]
+
+    return expression
+
+def extract_constant(expression):
+    expression = expression.strip()  # Remove leading/trailing whitespaces
+    pattern = r'(?<!\*)[-+]?\b\d*\.?\d+(?=\D*$)(?![\w*])'  # Updated pattern to match the constant
+
+    match = re.search(pattern, expression)
+    if match:
+        extracted_part = match.group(0)
+        return extracted_part
+
+    return None
+
+def is_string_number(string):
+    try:
+        float(string)  # or int(string) if you want to check for integers only
+        return True
+    except ValueError:
+        return False
+
+
+
+def remove_constants(expression):
+    # # Regular expression pattern to match constant numbers
+    # pattern = r'(?<!\*)\b\d+\b(?!\*)'
+    # constant = extract_pattern(expression)
+    # # Remove constants that are not multiplied with variables
+    # expression = re.sub(pattern, '', expression)
+
+    expression = expression.strip()  # Remove leading/trailing whitespaces
+    constant_pattern = r"\b[-+]?[0-9]*\.?[0-9]+\b"  # Pattern to match a constant
+    constant = extract_constant(expression)
+
+    # Check if the expression ends with a constant
+    if re.search(constant_pattern + r"\s*$", expression):
+        # Remove the constant from the end of the expression
+        expression = re.sub(constant_pattern + r"\s*$", "", expression)
+
+    letters= expression.split(' ')
+    is_plus = False
+    exit = False
+    if constant == None:
+      return expression , constant , is_plus , exit
+    if len(letters) == 1:
+      exit = True
+      return expression , constant , is_plus , exit
+    elif letters[-2] == '+' :
+      is_plus = True
+    expression = remove_trailing_operators(expression.strip())
+    return expression , constant , is_plus , exit
+
+
+
+  def extract_function_from_line(equation):
+    comparison_operators = ['<', '>', '<=', '>=', '==', '!=']
+
+    for operator in comparison_operators:
+        if operator in equation:
+            return equation.split(operator)[0].strip()
+
+def extract_inequation(line):
+    # Regular expression pattern to match the inequation part
+    pattern = r'^c\d+\s+(.*)$'
+    match = re.match(pattern, line)
+
+    if match:
+        inequation = match.group(1)
+        # Extract the comparison operator and the number after it
+        operator_and_number = re.findall(r'([<>]=?)\s*(-?\d+)', inequation)
+        if operator_and_number:
+            operator, number = operator_and_number[0]
+            return f"{operator} {number}"
+
+    return None
+
+def remove_first_word(line):
+    pattern = r'^c\d+\s(.*)$'
+    match = re.match(pattern, line)
+    if match:
+        return match.group(1)
+    return line
+
+def read_constraints(filename):
+    variables = []
+    constraints_functions = []
+    inequalities = []
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            line = line.strip()
+            if line.startswith("VAR"):
+                # Extract variable names
+                variable_line = line.split(' ')
+                var = variable_line[1:]
+                var = sp.symbols(var)
+                variables.extend(var)
+            elif line.startswith("c"):
+                # Extract objective function
+                inequalities.append(extract_inequation(line))
+                line = remove_first_word(line)
+                constraints_functions.append(extract_function_from_line(line))
+
+    return variables, constraints_functions , inequalities
+
+
+  def generate_lp_file(objective_function, constraints, filename,inequalities , is_max):
+    # Open the file for writing
+    with open(filename, 'w') as file:
+        # Write the objective function
+        if is_max == True :
+          file.write("Maximize\n")
+        else:
+          file.write("Minimize\n")
+        file.write(str(objective_function).replace("*", " ") + "\n" + "\n")
+
+        # Write the constraints
+        file.write("Subject To\n")
+        c = 0
+        for constraint in constraints:
+            file.write(str(constraint).replace("*", " ") +" " + inequalities[c] + "\n")
+            c+=1
+
+        # Write the end of the file
+        file.write("\nEnd")
+
+  
