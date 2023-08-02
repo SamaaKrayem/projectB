@@ -1,0 +1,37 @@
+import gurobipy as gp
+def solve_linear_problem(filename):
+  # Read the problem data from a file
+  problem = gp.read(filename)
+
+  # Create a Gurobi model instance
+  model = gp.Model()
+
+  # Add the decision variables to the model
+  variables = {}
+  for var_name in problem.getVars():
+      var = model.addVar(lb=var_name.LB, ub=var_name.UB, obj=var_name.Obj, name=var_name.VarName)
+      variables[var_name.VarName] = var
+
+  # Add the constraints to the model
+  for constr_name in problem.getConstrs():
+      constr_expr = problem.getRow(constr_name)
+      lhs = gp.LinExpr()
+      for i in range(constr_expr.size()):
+          lhs += variables[constr_expr.getVar(i).VarName] * constr_expr.getCoeff(i)
+      constr = model.addConstr(lhs=lhs, sense=constr_name.Sense, rhs=constr_name.RHS)
+
+  # Set the objective function
+  model.setObjective(gp.quicksum(variables[var_name.VarName] * var_name.Obj for var_name in problem.getVars()), problem.ModelSense)
+
+  # Optimize the model
+  model.optimize()
+  point = []
+  # Print the optimal objective value and variable values
+  print("##################solution##################")
+  print('Optimal objective value:', model.objVal)
+  for var_name in problem.getVars():
+      point.append(variables[var_name.VarName].X)
+      print(var_name.VarName, variables[var_name.VarName].X)
+  print(point)
+  print("############################################")
+  return point
