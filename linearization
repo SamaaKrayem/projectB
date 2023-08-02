@@ -1,0 +1,33 @@
+import sympy as sp
+
+def linearize(func, variables, point):
+    """
+    Linearizes a nonlinear function using first-order approximation
+    Args:
+        func (sp.Basic): Nonlinear function to be linearized
+        variables (list): List of variables to be linearized
+        point (dict): Dictionary of values representing the point of linearization
+    Returns:
+        sp.Expr: Linearized function
+    """
+    # Create a symbolic expression for the function
+    func_expr = sp.sympify(func)
+
+    # Create symbolic variables for the point of linearization
+    point_vars = {var: sp.Symbol(var) for var in variables}
+
+    # Replace variables in the function with the symbolic variables
+    func_expr = func_expr.subs(point_vars)
+
+    # Compute the first-order partial derivatives
+    derivatives = [sp.diff(func_expr, var) for var in variables]
+
+    # Evaluate the derivatives at the point of linearization
+    derivatives_at_point = [derivative.subs(point) for derivative in derivatives]
+
+    # Create the linearized function using first-order approximation
+    linearized_func = func_expr.subs(zip(variables, point.values()))
+    for i in range(len(variables)):
+        linearized_func += derivatives_at_point[i] * (sp.Symbol(variables[i]) - point[variables[i]])
+
+    return linearized_func
