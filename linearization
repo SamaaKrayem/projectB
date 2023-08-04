@@ -1,33 +1,30 @@
 import sympy as sp
 
-def linearize(func, variables, point):
+def linearize_expression(expression, variables, center):
     """
-    Linearizes a nonlinear function using first-order approximation
-    Args:
-        func (sp.Basic): Nonlinear function to be linearized
-        variables (list): List of variables to be linearized
-        point (dict): Dictionary of values representing the point of linearization
+    Linearize a non-linear expression with multiple variables using a Taylor series expansion.
+
+    Arguments:
+    expression -- The non-linear expression to be linearized.
+    variables -- The variables of the expression.
+    center -- The point around which the Taylor series expansion is performed.
+
     Returns:
-        sp.Expr: Linearized function
+    The linearized expression.
     """
-    # Create a symbolic expression for the function
-    func_expr = sp.sympify(func)
+    # Convert the expression from a string to a SymPy expression
+    expression = sp.sympify(expression)
 
-    # Create symbolic variables for the point of linearization
-    point_vars = {var: sp.Symbol(var) for var in variables}
+    # Compute the partial derivatives of the expression with respect to each variable
+    derivatives = [expression.diff(variable) for variable in variables]
 
-    # Replace variables in the function with the symbolic variables
-    func_expr = func_expr.subs(point_vars)
+    # Compute the linearized expression using the partial derivatives and the center point
+    linearized_expression = expression.subs([(variable, value) for variable, value in zip(variables, center)])
 
-    # Compute the first-order partial derivatives
-    derivatives = [sp.diff(func_expr, var) for var in variables]
+    for variable, derivative in zip(variables, derivatives):
+        variable_value = center[variables.index(variable)]
+        linearized_expression += derivative.subs([(var, val) for var, val in zip(variables, center)]) * (variable - variable_value)
 
-    # Evaluate the derivatives at the point of linearization
-    derivatives_at_point = [derivative.subs(point) for derivative in derivatives]
-
-    # Create the linearized function using first-order approximation
-    linearized_func = func_expr.subs(zip(variables, point.values()))
-    for i in range(len(variables)):
-        linearized_func += derivatives_at_point[i] * (sp.Symbol(variables[i]) - point[variables[i]])
-
-    return linearized_func
+    linearized_expression = sp.simplify(linearized_expression)
+    linearized_expression = evaluate_expression(linearized_expression)
+    return linearized_expression
