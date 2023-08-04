@@ -34,8 +34,7 @@ def evaluate_expression(expression):
 
     return result
 
-
-  def convert_division_to_multiplication(expression):
+def convert_division_to_multiplication(expression):
     terms = re.split(r'([-+*/])', expression)
     converted_terms = []
 
@@ -54,9 +53,22 @@ def evaluate_expression(expression):
     converted_expression = ''.join(converted_terms)
     return converted_expression
 
+import sympy as sp
+from sympy.parsing.sympy_parser import parse_expr
 
+def convert_fraction_to_decimal(expr):
+    # parse the expression to sympy
+    sympy_expr = parse_expr(expr)
 
-      from sympy import symbols, sympify, Float
+    # Replace all fractions with decimal equivalents
+    for arg in sympy_expr.args:
+        if isinstance(arg, sp.Mul) or isinstance(arg, sp.Rational):
+            sympy_expr = sympy_expr.subs(arg, arg.evalf())
+
+    return str(sympy_expr)
+
+from sympy import symbols, sympify, Float
+
 def simplify_expression(expression):
     # Parse the expression
     parsed_expr = sympify(expression)
@@ -84,7 +96,6 @@ def simplify_expression(expression):
 
     return simplified_str
 
-
 def read_obj_func(filename):
     variables = []
     objective_function = ""
@@ -107,7 +118,7 @@ def read_obj_func(filename):
 
     return variables, objective_function, is_max
 
-  from sympy.core.evalf import N
+from sympy.core.evalf import N
 import re
 
 def remove_trailing_operators(expression):
@@ -169,12 +180,36 @@ def remove_constants(expression):
     elif letters[-2] == '+' :
       is_plus = True
     expression = remove_trailing_operators(expression.strip())
-    return expression , constant , is_plus , exit
+
+    exp = expression.split(' ')
+    if ('e' in exp[-1]):
+      new_expression = ''
+      for i,ex in enumerate(exp):
+         if i < len(exp) -1:
+          if(i==0):
+            new_expression = ex
+          else:
+            new_expression = new_expression + ' ' + ex
+      expression = new_expression
+
+    new_expression = ''
+    exp= expression.split(' ')
+    if(((exp[-1] == '') and (exp[-2] == '+' or exp[-2]== '-')) or ( exp[-1] == '+' or exp[-1]== '-')):
+      for i,ex in enumerate(exp):
+        if ((ex == '+' or ex == '-') and (i!= len(exp) - 1 and i!= len(exp) - 2 )) or (ex != '+' and ex != '-'):
+          if(i==0):
+            new_expression = ex
+          else:
+            new_expression = new_expression + ' ' + ex
+    if(new_expression == ''):
+      new_expression = expression
 
 
+    return new_expression , constant , is_plus , exit
 
-  def extract_function_from_line(equation):
-    comparison_operators = ['<', '>', '<=', '>=', '==', '!=']
+
+def extract_function_from_line(equation):
+    comparison_operators = ['<', '>', '<=', '>=', '=', '!=']
 
     for operator in comparison_operators:
         if operator in equation:
@@ -188,7 +223,7 @@ def extract_inequation(line):
     if match:
         inequation = match.group(1)
         # Extract the comparison operator and the number after it
-        operator_and_number = re.findall(r'([<>]=?)\s*(-?\d+)', inequation)
+        operator_and_number = re.findall(r'([<>]=?|=)\s*(-?\d+)', inequation)
         if operator_and_number:
             operator, number = operator_and_number[0]
             return f"{operator} {number}"
@@ -225,7 +260,7 @@ def read_constraints(filename):
     return variables, constraints_functions , inequalities
 
 
-  def generate_lp_file(objective_function, constraints, filename,inequalities , is_max):
+def generate_lp_file(objective_function, constraints, filename,inequalities , is_max):
     # Open the file for writing
     with open(filename, 'w') as file:
         # Write the objective function
@@ -245,4 +280,8 @@ def read_constraints(filename):
         # Write the end of the file
         file.write("\nEnd")
 
-  
+
+def check_if_zoo(expr):
+  if 'zoo' in str(expr):
+    return True
+  return False
