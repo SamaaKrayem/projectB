@@ -2,8 +2,8 @@ def solve_project(file):
   variables, objective_func , is_max = read_obj_func(file)
   variables, constraints_functions , inequalities = read_constraints(file)
   print(objective_func,is_max,variables, constraints_functions , inequalities)
-  prev_point = [100] #randomly chosen
-  new_point = [15]
+  prev_point = [100,100,1,1,1,1,1] #randomly chosen
+  new_point = [100,100,102,101,3,2,1]
   new_constraints_functions = []
   new_inequalities = []
   diff = []
@@ -18,13 +18,26 @@ def solve_project(file):
   while(np.linalg.norm(diff)>0.1):
     prev_point=new_point
     lin_objective_func = linearize_expression(objective_func, variables , new_point)
+    lin_objective_func = str(lin_objective_func).replace('I', '1')
+    print("aaaaaaaaa")
     print(lin_objective_func)
+    if check_if_zoo(lin_objective_func) == True :
+      print("in ZOOOO ****")
+      for i , point in enumerate(new_point):
+        print(point)
+        if point == 0 :
+          new_point[i] = 0.000000001
+      lin_objective_func = linearize_expression(objective_func, variables , new_point)
+      print(lin_objective_func)
+    lin_objective_func =  convert_fraction_to_decimal(str(lin_objective_func))
     lin_objective_func = simplify_expression(lin_objective_func)
     print(lin_objective_func)
     lin_objective_func , zevel1,zevel2,zevel3  = remove_constants(str(lin_objective_func))
     print(lin_objective_func)
     for i in range(len(constraints_functions)):
       new_const = linearize_expression(constraints_functions[i], variables, new_point)
+      new_const = str(new_const).replace('I', '1')
+      new_const = convert_fraction_to_decimal(str(new_const))
       new_const = simplify_expression(new_const)
       new_constraints_functions.append(new_const)
       new_constraints_functions[i]  ,constant , is_plus , exit =remove_constants(str(new_constraints_functions[i]))
