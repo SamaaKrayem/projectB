@@ -1,0 +1,16 @@
+MIN  t3 + Vx1 + Vx2 + Vx3 + Vy1 + Vy2 + Vy3 
+VAR t3 Vx1 Vx2 Vx3 Vy1 Vy2 Vy3 Y1 Y2 Y3 X1 X2 X3 t1 t2
+
+Subjext To
+c1 X1 - t1 * Vx1 = 0
+c2 Y1 - t1 * Vy1 = 0
+c3 (X1 - 500)^2 + (Y1 - 450)^2 <= 100
+c4 t2 - t1 > 0
+c5 Vx2 >= 1
+c6 Vy2 <= 10
+c7 X3  - X2 - (t3 -t2)*Vx3= 0
+c8 Y3 - Y2 - (t3 -t2)*Vy3 = 0
+c9 (X3 - 350)^2 + (Y3 - 100)^2 <= 25
+c10 t3 - t2 >= 0
+c11 Vx3 >= 1
+c12 Vy3 <= 10
